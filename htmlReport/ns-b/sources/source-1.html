@@ -1,0 +1,183 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > UserRepositoryAdapter</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">co.pragma.powerup.r2dbc.user</a>
+</div>
+
+<h1>Coverage Summary for Class: UserRepositoryAdapter (co.pragma.powerup.r2dbc.user)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">UserRepositoryAdapter</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/5)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/6)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/32)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package co.pragma.powerup.r2dbc.user;
+&nbsp;
+&nbsp;import co.pragma.powerup.model.config.BusinessException;
+&nbsp;import co.pragma.powerup.model.user.User;
+&nbsp;import co.pragma.powerup.model.user.gateways.UserRepository;
+&nbsp;import co.pragma.powerup.r2dbc.entity.UserEntity;
+&nbsp;import co.pragma.powerup.r2dbc.helper.ReactiveAdapterOperations;
+&nbsp;import lombok.extern.slf4j.Slf4j;
+&nbsp;import org.reactivecommons.utils.ObjectMapper;
+&nbsp;import org.springframework.stereotype.Repository;
+&nbsp;import org.springframework.transaction.reactive.TransactionalOperator;
+&nbsp;import reactor.core.publisher.Mono;
+&nbsp;
+&nbsp;import static co.pragma.powerup.r2dbc.util.Constants.*;
+&nbsp;
+&nbsp;@Repository
+<b class="nc">&nbsp;@Slf4j</b>
+&nbsp;public class UserRepositoryAdapter extends ReactiveAdapterOperations&lt;
+&nbsp;        User, UserEntity, Long, IUserRepository&gt; implements UserRepository {
+&nbsp;
+&nbsp;    private final TransactionalOperator txOperator;
+&nbsp;
+&nbsp;    public UserRepositoryAdapter(IUserRepository repository, ObjectMapper mapper, TransactionalOperator txOperator) {
+<b class="nc">&nbsp;        super(repository, mapper, d -&gt; mapper.map(d, User.class));</b>
+<b class="nc">&nbsp;        this.txOperator = txOperator;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public Mono&lt;Void&gt; save(User user) {
+<b class="nc">&nbsp;        return validateAmount(user)</b>
+<b class="nc">&nbsp;                .then(existsByEmailAndIdentityDocument(user.getEmail(), user.getIdentityDocument()))</b>
+<b class="nc">&nbsp;                .filter(exists -&gt; !exists)</b>
+<b class="nc">&nbsp;                .switchIfEmpty(Mono.error(BusinessException.builder()</b>
+<b class="nc">&nbsp;                        .code(B002)</b>
+<b class="nc">&nbsp;                        .message(BUSINESS_VALIDATIONS_USER_EXIST_B002)</b>
+<b class="nc">&nbsp;                        .build()))</b>
+<b class="nc">&nbsp;                .flatMap(exist -&gt; repository.save(toData(user)))</b>
+<b class="nc">&nbsp;                .doOnSuccess(unused -&gt; log.info(&quot;[INFO] - User saved successfully&quot;))</b>
+<b class="nc">&nbsp;                .doOnError(error -&gt; log.error(&quot;[ERROR] - Error saving user: {}&quot;, error.getMessage(), error))</b>
+<b class="nc">&nbsp;                .then()</b>
+<b class="nc">&nbsp;                .as(txOperator::transactional);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private Mono&lt;User&gt; validateAmount(User user) {
+<b class="nc">&nbsp;        return Mono.just(user)</b>
+<b class="nc">&nbsp;                .filter(usr -&gt; usr.getBaseSalary() != null)</b>
+<b class="nc">&nbsp;                .switchIfEmpty(Mono.error(BusinessException.builder()</b>
+<b class="nc">&nbsp;                        .code(B001)</b>
+<b class="nc">&nbsp;                        .message(BUSINESS_VALIDATIONS_BASE_SALARY_B001)</b>
+<b class="nc">&nbsp;                        .build()))</b>
+<b class="nc">&nbsp;                .filter(usr -&gt; usr.getBaseSalary().compareTo(MIN_BASE_SALARY) &gt;= 0)</b>
+<b class="nc">&nbsp;                .switchIfEmpty(Mono.error(BusinessException.builder()</b>
+<b class="nc">&nbsp;                        .code(B001)</b>
+<b class="nc">&nbsp;                        .message(BUSINESS_VALIDATIONS_MIN_BASE_SALARY_B001 + MIN_BASE_SALARY)</b>
+<b class="nc">&nbsp;                        .build()))</b>
+<b class="nc">&nbsp;                .filter(usr -&gt; usr.getBaseSalary().compareTo(MAX_BASE_SALARY) &lt;= 0)</b>
+<b class="nc">&nbsp;                .switchIfEmpty(Mono.error(BusinessException.builder()</b>
+<b class="nc">&nbsp;                        .code(B001)</b>
+<b class="nc">&nbsp;                        .message(BUSINESS_VALIDATIONS_MAX_BASE_SALARY_B001 + MAX_BASE_SALARY)</b>
+<b class="nc">&nbsp;                        .build()));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public Mono&lt;Boolean&gt; existsByEmailAndIdentityDocument(String email, String document) {
+<b class="nc">&nbsp;        return repository.existsByEmailAndIdentityDocument(email, document);</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-08-30 19:14</div>
+</div>
+</body>
+</html>

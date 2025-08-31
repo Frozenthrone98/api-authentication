@@ -1,0 +1,220 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > GlobalExceptionHandler</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">co.pragma.powerup.api.config</a>
+</div>
+
+<h1>Coverage Summary for Class: GlobalExceptionHandler (co.pragma.powerup.api.config)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">GlobalExceptionHandler</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/8)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/6)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/53)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package co.pragma.powerup.api.config;
+&nbsp;
+&nbsp;import co.pragma.powerup.api.exception.EmptyBodyException;
+&nbsp;import co.pragma.powerup.api.dto.ErrorResponseDTO;
+&nbsp;import co.pragma.powerup.model.config.BusinessException;
+&nbsp;import com.fasterxml.jackson.core.JsonProcessingException;
+&nbsp;import com.fasterxml.jackson.databind.ObjectMapper;
+&nbsp;import jakarta.validation.ConstraintViolation;
+&nbsp;import jakarta.validation.ConstraintViolationException;
+&nbsp;import lombok.RequiredArgsConstructor;
+&nbsp;import lombok.extern.log4j.Log4j2;
+&nbsp;import org.springframework.boot.web.reactive.error.ErrorWebExceptionHandler;
+&nbsp;import org.springframework.http.HttpStatus;
+&nbsp;import org.springframework.http.MediaType;
+&nbsp;import org.springframework.stereotype.Component;
+&nbsp;import org.springframework.web.server.ServerWebExchange;
+&nbsp;import reactor.core.publisher.Flux;
+&nbsp;import reactor.core.publisher.Mono;
+&nbsp;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Map;
+&nbsp;import java.util.Set;
+&nbsp;
+&nbsp;import static co.pragma.powerup.api.util.Constants.*;
+&nbsp;
+&nbsp;@Component
+<b class="nc">&nbsp;@Log4j2</b>
+&nbsp;@RequiredArgsConstructor
+&nbsp;public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
+&nbsp;    private final ObjectMapper objectMapper;
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public Mono&lt;Void&gt; handle(ServerWebExchange exchange, Throwable ex) {
+<b class="nc">&nbsp;        log.info(&quot;[INFO] HandlerErrors - start&quot;);</b>
+<b class="nc">&nbsp;        return Mono.just(exchange.getResponse())</b>
+<b class="nc">&nbsp;                .map(response -&gt; {</b>
+<b class="nc">&nbsp;                    response.getHeaders().setContentType(MediaType.APPLICATION_JSON);</b>
+<b class="nc">&nbsp;                    return response;</b>
+<b class="nc">&nbsp;                }).flatMap(response -&gt; {</b>
+<b class="nc">&nbsp;                    if(ex instanceof ConstraintViolationException requestException) {</b>
+<b class="nc">&nbsp;                        log.error(&quot;[ERROR] requestException - end&quot;);</b>
+<b class="nc">&nbsp;                        return toListErrors(requestException.getConstraintViolations())</b>
+<b class="nc">&nbsp;                                .flatMap(errors -&gt;</b>
+<b class="nc">&nbsp;                                        buildErrorResponse(exchange, HttpStatus.BAD_REQUEST,</b>
+<b class="nc">&nbsp;                                                ErrorResponseDTO.builder()</b>
+<b class="nc">&nbsp;                                                        .code(E001)</b>
+<b class="nc">&nbsp;                                                        .message(REQUEST_VALIDATIONS_ERROR_E001)</b>
+<b class="nc">&nbsp;                                                        .errorsDetails(errors)</b>
+<b class="nc">&nbsp;                                                        .build()</b>
+&nbsp;                                ));
+<b class="nc">&nbsp;                    } else if(ex instanceof BusinessException businessException) {</b>
+<b class="nc">&nbsp;                        log.error(&quot;[ERROR] businessException - end&quot;);</b>
+<b class="nc">&nbsp;                        return buildErrorResponse(exchange, HttpStatus.BAD_REQUEST,</b>
+<b class="nc">&nbsp;                                ErrorResponseDTO.builder()</b>
+<b class="nc">&nbsp;                                        .code(businessException.getCode())</b>
+<b class="nc">&nbsp;                                        .message(businessException.getMessage())</b>
+<b class="nc">&nbsp;                                        .build()</b>
+&nbsp;                        );
+<b class="nc">&nbsp;                    } else if(ex instanceof EmptyBodyException emptyBodyException) {</b>
+<b class="nc">&nbsp;                        log.error(&quot;[ERROR] emptyBodyException - end&quot;);</b>
+<b class="nc">&nbsp;                        return buildErrorResponse(exchange, HttpStatus.BAD_REQUEST,</b>
+<b class="nc">&nbsp;                                ErrorResponseDTO.builder()</b>
+<b class="nc">&nbsp;                                        .code(emptyBodyException.getCode())</b>
+<b class="nc">&nbsp;                                        .message(emptyBodyException.getMessage())</b>
+<b class="nc">&nbsp;                                        .build()</b>
+&nbsp;                        );
+&nbsp;                    }
+&nbsp;
+<b class="nc">&nbsp;                    ErrorResponseDTO errorResponseDTO = ErrorResponseDTO.builder()</b>
+<b class="nc">&nbsp;                            .code(E999)</b>
+<b class="nc">&nbsp;                            .message(GENERIC_ERROR_E999)</b>
+<b class="nc">&nbsp;                            .build();</b>
+<b class="nc">&nbsp;                    log.info(&quot;[INFO] HandlerErrors - end&quot;);</b>
+<b class="nc">&nbsp;                    return buildErrorResponse(exchange, HttpStatus.INTERNAL_SERVER_ERROR, errorResponseDTO);</b>
+&nbsp;                });
+&nbsp;    }
+&nbsp;
+&nbsp;    private Mono&lt;Void&gt; buildErrorResponse(ServerWebExchange exchange, HttpStatus status, ErrorResponseDTO errorResponseDTO) {
+<b class="nc">&nbsp;        exchange.getResponse().setStatusCode(status);</b>
+<b class="nc">&nbsp;        exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);</b>
+&nbsp;
+&nbsp;        try {
+<b class="nc">&nbsp;            byte[] bytes = objectMapper.writeValueAsBytes(errorResponseDTO);</b>
+<b class="nc">&nbsp;            var buffer = exchange.getResponse().bufferFactory().wrap(bytes);</b>
+<b class="nc">&nbsp;            return exchange.getResponse().writeWith(Mono.just(buffer));</b>
+&nbsp;        } catch (JsonProcessingException e) {
+<b class="nc">&nbsp;            log.error(GENERIC_ERROR_SERIALIZING, e);</b>
+<b class="nc">&nbsp;            exchange.getResponse().setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);</b>
+<b class="nc">&nbsp;            return exchange.getResponse().setComplete();</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private Mono&lt;Map&lt;String,List&lt;String&gt;&gt;&gt; toListErrors(Set&lt;ConstraintViolation&lt;?&gt;&gt; violations) {
+<b class="nc">&nbsp;        return Flux.fromIterable(violations)</b>
+<b class="nc">&nbsp;                .groupBy(violation -&gt; violation.getPropertyPath().toString())</b>
+<b class="nc">&nbsp;                .flatMap(groupedFlux -&gt;</b>
+<b class="nc">&nbsp;                        groupedFlux</b>
+<b class="nc">&nbsp;                                .map(ConstraintViolation::getMessage)</b>
+<b class="nc">&nbsp;                                .collectList()</b>
+<b class="nc">&nbsp;                                .map(errorsByField -&gt; Map.entry(groupedFlux.key(), errorsByField))</b>
+&nbsp;                )
+<b class="nc">&nbsp;                .collectMap(Map.Entry::getKey, Map.Entry::getValue);</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-08-30 19:14</div>
+</div>
+</body>
+</html>
