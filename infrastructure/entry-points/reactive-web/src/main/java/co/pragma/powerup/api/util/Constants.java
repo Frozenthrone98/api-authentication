@@ -1,6 +1,5 @@
 package co.pragma.powerup.api.util;
 
-import java.util.concurrent.Flow;
 
 public class Constants {
 
@@ -14,6 +13,8 @@ public class Constants {
     public static final String GENERIC_ERROR_E999 = "An unexpected error occurred. Please try again later.";
     public static final String EMPTY_BODY_ERROR_E002 = "The request body is required.";
     public static final String GENERIC_ERROR_SERIALIZING = "Error serializing ErrorResponse.";
+    public static final String RESPONSE_VALIDATIONS_IS_FOUND = "User found";
+    public static final String RESPONSE_VALIDATIONS_NOT_FOUND = "User not found";
 
     private Constants() {}
 }
