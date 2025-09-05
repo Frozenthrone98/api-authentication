@@ -1,4 +1,4 @@
-package co.pragma.powerup.api.dto;
+package co.pragma.powerup.api.dto.request.register;
 
 import jakarta.validation.constraints.*;
 
